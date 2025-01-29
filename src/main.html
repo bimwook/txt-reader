@@ -272,6 +272,11 @@
       .x-normal {
         font-size:16px;
       }
+      .x-title {
+        padding-top: 16px;
+        font-size: 18px;
+        text-align: center;
+      }
       .mx-listview::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -296,6 +301,11 @@
         border-radius: 0;
         background: rgba(0,0,0,0.01);
       }
+      .mx-item.x-title {
+        padding: 0;
+        font-size: 16px;
+        text-align: center;
+      }
       @media screen and (max-width: 640px) {
         #meta {
           display: none;
@@ -315,8 +325,8 @@
         <div id="x-menu" class="mx-side" v-show="rows.menu.length">
           <div class="mx-menu-title">本页索引</div>
           <ul class="mx-listview">
-            <li class="mx-item" v-for="m in rows.menu" :key="m.id" v-on:click="show(m)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"  fill="currentColor">
+            <li class="mx-item" v-for="m in rows.menu" :key="m.id" v-bind:class="{'x-title': m.title}" v-on:click="show(m)">
+              <svg v-show="!m.title" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"  fill="currentColor">
                 <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
               </svg>
               <em class="mx-title" :title="m.text">{{m.text}}</em>
@@ -330,10 +340,7 @@
           <div class="x-receive" v-show="(rowid=='') || canreceive" v-bind:class="{ 'canreceive':canreceive }">拖放文件以打开</div>
           <div class="x-circle" v-show="(rowid!='') && (!loaded)"></div>
           <div v-show="loaded && (!canreceive)" class="mx-max800">
-            <template v-for="row in rows.items">
-              <h1 v-if="row.title" style="text-align: center; font-size:24px;">{{row.text}}</h1>
-              <code v-else v-bind:data-id="row.id" v-bind:class="row.menu?'x-menu':'x-normal'">{{row.text}}</code>
-            </template>
+            <code v-for="row in rows.items" v-bind:data-id="row.id" v-bind:class="{'x-menu':row.menu, 'x-normal': !row.menu, 'x-title': row.title}">{{row.text}}</code>
           </div>
         </div>
       </div>
@@ -454,22 +461,21 @@
               hot.wait(10).then(()=>{
                 for(let i=0; i<rows.items.length; i++){
                   let row = rows.items[i];
+                  let id = hot.uuid();
                   if(row.match(/^\s*# (.+)$/)){
-                    this.rows.items.push({ id:"title", title: true, menu: false, text: row.replace(/^\s*# /,"").trim() });
+                    this.rows.menu.push({ id: id, title: true, menu: false, text: row.replace(/^\s*# /,"").trim() });
+                    this.rows.items.push({ id: id, title: true, menu: false, text: row.replace(/^\s*# /,"").trim() });
                   }
                   else if(row.match(/^\s*## (.+)$/)){
-                    let id = hot.uuid();
-                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.replace(/^\s*## /,"").trim() })
+                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.replace(/^\s*## /,"").trim() });
                     this.rows.items.push({ id: id, title: false, menu: true, text: row.replace(/## /,"") });
                   }
                   else if(row.match(/^\s*第\s*\d+\s*章 (.+)$/)){
-                    let id = hot.uuid();
-                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.trim() })
+                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.trim() });
                     this.rows.items.push({ id: id, title: false, menu: true, text: row });
                   }
                   else if(row.match(/^\s*第\s*[一二三四五六七八九十百千万亿]+\s*章 (.+)$/)){
-                    let id = hot.uuid();
-                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.trim() })
+                    this.rows.menu.push({ id: id, title: false, menu: true, text: row.trim() });
                     this.rows.items.push({ id: id, title: false, menu: true, text: row });
                   }
                   else {
@@ -477,7 +483,7 @@
                   }
                 }
                 this.loaded = true;
-              });
+              }).catch(e=>{ });
             },
             read(doc){
               let me = this;
