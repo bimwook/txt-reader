@@ -247,6 +247,7 @@
       }
       .x-receive {
         width: 100%;
+        color: silver;
         max-width: 800px;
         margin: 2rem auto;
         display: flex;
@@ -254,10 +255,12 @@
         align-items: center;
         justify-content: center;
         flex-wrap: nowrap;
-        transition: background-color 0.3s ease-out;
-        background-color: #FFFFFF80;
+        user-select: none;
+        transition: all 0.3s ease-out;
+        background-color: #FFFFFF60;
       }
       .canreceive {
+        color: black;
         background-color: white;
       }
       .mx-nomore {
@@ -337,7 +340,7 @@
           </ul>
         </div>
         <div class="mx-main">
-          <div class="x-receive" v-show="(rowid=='') || canreceive" v-bind:class="{ 'canreceive':canreceive }">拖放文件以打开</div>
+          <div class="x-receive" v-show="(rowid=='') || canreceive" v-on:click="select()" v-bind:class="{ 'canreceive':canreceive }">拖放文件以打开</div>
           <div class="x-circle" v-show="(rowid!='') && (!loaded)"></div>
           <div v-show="loaded && (!canreceive)" class="mx-max800">
             <code v-for="row in rows.items" v-bind:data-id="row.id" v-bind:class="{'x-menu':row.menu, 'x-normal': !row.menu, 'x-title': row.title}">{{row.text}}</code>
@@ -523,6 +526,25 @@
                 dom.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }
             },
+            select(){
+              let me = this;
+              let x = document.createElement("input");
+              x.setAttribute('type',"file");
+              x.setAttribute('name',"file");
+              x.setAttribute('accept',"text/plain");
+              x.onchange = async function(e){
+                for(let i=0; i<this.files.length; i++){
+                  let doc = this.files[i];
+                  let item = await me.read(doc);
+                  me.rowid = "-";
+                  me.meta.name = item.name;
+                  me.meta.size = me.showsize( item.size );
+                  me.meta.created = hot.now();
+                  me.build(item.data.replace(/\r/g,""));
+                }
+              };
+              x.click();
+            },     
             win(url){
               window.open(url);
             }
